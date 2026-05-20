@@ -18,8 +18,9 @@ const uploadFutsalImage = async (req, res) => {
     console.log("File:", req.file.filename);
     console.log("Path:", `/uploads/${req.file.filename}`);
 
-    // Return local file path
-    const secure_url = `http://localhost:5001/uploads/${req.file.filename}`;
+    const BASE_URL =
+      process.env.BACKEND_PUBLIC_URL || `http://localhost:${process.env.PORT || 5001}`;
+    const secure_url = `${BASE_URL}/uploads/${req.file.filename}`;
 
     res.json({
       secure_url: secure_url,
