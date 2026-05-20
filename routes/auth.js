@@ -9,19 +9,8 @@ const {
   resendOTP,
 } = require("../controllers/auth.controller");
 const passport = require("../config/passport");
-const expressSession = require("express-session");
 
 const router = express.Router();
-
-router.use(
-  expressSession({
-    secret: process.env.SESSION_SECRET || "secret",
-    resave: false,
-    saveUninitialized: false,
-  }),
-);
-router.use(passport.initialize());
-router.use(passport.session());
 
 // User Registration
 router.post("/register", register);
@@ -47,7 +36,7 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", {
-    failureRedirect: "http://localhost:5173/LoginSignup",
+    failureRedirect: `${process.env.FRONTEND_URL || "http://localhost:5173"}/LoginSignup`,
     session: true,
   }),
   (req, res) => {
@@ -56,14 +45,14 @@ router.get(
       process.env.JWT_SECRET,
       { expiresIn: "7d" },
     );
-    res.redirect(`http://localhost:5173/explore?token=${token}`);
+    res.redirect(`${process.env.FRONTEND_URL || "http://localhost:5173"}/explore?token=${token}`);
   },
 );
 
 // Logout
 router.get("/logout", (req, res) => {
   req.logout(() => {
-    res.redirect("http://localhost:5173/");
+    res.redirect(process.env.FRONTEND_URL || "http://localhost:5173/");
   });
 });
 
