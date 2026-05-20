@@ -9,7 +9,7 @@ const {
   toggleOfferStatus,
   getOfferById,
 } = require("../controllers/offer.controller");
-const ownerAuth = require("../middleware/Ownerauth");
+const ownerAuth = require("../middleware/ownerAuth");
 
 const router = express.Router();
 

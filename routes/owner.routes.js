@@ -8,7 +8,7 @@ const {
   forgotPassword,
   resetPassword,
 } = require("../controllers/owner.controller");
-const ownerAuth = require("../middleware/Ownerauth");
+const ownerAuth = require("../middleware/ownerAuth");
 
 const router = express.Router();
 
