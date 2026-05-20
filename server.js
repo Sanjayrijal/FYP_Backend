@@ -22,12 +22,13 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(
   cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    origin: (origin, callback) => callback(null, true),
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: false,
+    credentials: true,
   }),
 );
+app.options("*", cors({ origin: (origin, callback) => callback(null, true), credentials: true }));
 app.use(
   expressSession({
     secret: process.env.SESSION_SECRET || "secret",
