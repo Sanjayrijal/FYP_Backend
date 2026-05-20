@@ -1,0 +1,16 @@
+/node_modules
+/dist
+/build
+/public
+/src
+/test
+/docs
+/examples
+/scripts
+/templates
+/config
+/logs
+/cache
+/temp
+.env
+.DS_Store
