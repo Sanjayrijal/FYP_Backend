@@ -7,6 +7,15 @@ const path = require("path");
 const FormData = require("form-data");
 const axios = require("axios");
 
+const isProduction = process.env.NODE_ENV === "production";
+
+const getBackendBaseUrl = () => {
+  const configured = (process.env.BACKEND_PUBLIC_URL || "").replace(/\/$/, "");
+  if (configured) return configured;
+  if (!isProduction) return `http://localhost:${process.env.PORT || 5001}`;
+  throw new Error("BACKEND_PUBLIC_URL must be set in production");
+};
+
 // UPLOAD IMAGE - Store locally
 const uploadFutsalImage = async (req, res) => {
   try {
@@ -18,8 +27,7 @@ const uploadFutsalImage = async (req, res) => {
     console.log("File:", req.file.filename);
     console.log("Path:", `/uploads/${req.file.filename}`);
 
-    const BASE_URL =
-      process.env.BACKEND_PUBLIC_URL || `http://localhost:${process.env.PORT || 5001}`;
+    const BASE_URL = getBackendBaseUrl();
     const secure_url = `${BASE_URL}/uploads/${req.file.filename}`;
 
     res.json({

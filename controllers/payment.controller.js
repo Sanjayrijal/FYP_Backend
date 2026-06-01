@@ -3,10 +3,21 @@ const crypto = require("crypto");
 const Booking = require("../models/booking");
 const Coupon = require("../models/Coupon");
 
+const isProduction = process.env.NODE_ENV === "production";
 const PORT = process.env.PORT || 5001;
-const BACKEND_PUBLIC_URL =
-  process.env.BACKEND_PUBLIC_URL || `http://localhost:${PORT}`;
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const BACKEND_PUBLIC_URL = (process.env.BACKEND_PUBLIC_URL || "").replace(/\/$/, "");
+const FRONTEND_URL = (process.env.FRONTEND_URL || "").replace(/\/$/, "");
+
+if (isProduction && !BACKEND_PUBLIC_URL) {
+  throw new Error("BACKEND_PUBLIC_URL must be set in production");
+}
+
+if (isProduction && !FRONTEND_URL) {
+  throw new Error("FRONTEND_URL must be set in production");
+}
+
+const effectiveBackendUrl = BACKEND_PUBLIC_URL || `http://localhost:${PORT}`;
+const effectiveFrontendUrl = FRONTEND_URL || "http://localhost:5173";
 
 const ESEWA_BASE_URL =
   process.env.ESEWA_BASE_URL || "https://rc-epay.esewa.com.np";
@@ -155,7 +166,7 @@ function getFrontendResultUrl({ status, bookingId, provider, message }) {
     provider: provider || "",
     message: message || "",
   });
-  return `${FRONTEND_URL}/payment-result?${qs.toString()}`;
+  return `${effectiveFrontendUrl}/payment-result?${qs.toString()}`;
 }
 
 // Optional direct checkout endpoint retained for compatibility/testing.
@@ -242,8 +253,8 @@ const initiateEsewaPayment = async (req, res) => {
       product_code: ESEWA_PRODUCT_CODE,
       product_service_charge: "0",
       product_delivery_charge: "0",
-      success_url: `${BACKEND_PUBLIC_URL}/api/payments/esewa/callback`,
-      failure_url: `${BACKEND_PUBLIC_URL}/api/payments/esewa/failure?bookingId=${booking._id}`,
+      success_url: `${effectiveBackendUrl}/api/payments/esewa/callback`,
+      failure_url: `${effectiveBackendUrl}/api/payments/esewa/failure?bookingId=${booking._id}`,
       signed_field_names: signedFieldNames,
       signature,
     };
