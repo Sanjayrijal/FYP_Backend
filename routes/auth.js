@@ -12,16 +12,6 @@ const passport = require("../config/passport");
 
 const router = express.Router();
 
-const normalizeUrl = (url) => (url ? url.replace(/\/$/, "") : "");
-const isProduction = process.env.NODE_ENV === "production";
-const frontendUrl = normalizeUrl(process.env.FRONTEND_URL);
-
-const getFrontendBaseUrl = () => {
-  if (frontendUrl) return frontendUrl;
-  if (!isProduction) return "http://localhost:5173";
-  throw new Error("FRONTEND_URL must be set in production");
-};
-
 // User Registration
 router.post("/register", register);
 router.post("/login", login);
@@ -46,7 +36,7 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", {
-    failureRedirect: `${getFrontendBaseUrl()}/LoginSignup`,
+    failureRedirect: `${process.env.FRONTEND_URL || "http://localhost:5173"}/LoginSignup`,
     session: true,
   }),
   (req, res) => {
@@ -55,14 +45,14 @@ router.get(
       process.env.JWT_SECRET,
       { expiresIn: "7d" },
     );
-    res.redirect(`${getFrontendBaseUrl()}/explore?token=${token}`);
+    res.redirect(`${process.env.FRONTEND_URL || "http://localhost:5173"}/explore?token=${token}`);
   },
 );
 
-// Logout
+// Logout1
 router.get("/logout", (req, res) => {
   req.logout(() => {
-    res.redirect(`${getFrontendBaseUrl()}/`);
+    res.redirect(process.env.FRONTEND_URL || "http://localhost:5173/");
   });
 });
 

@@ -4,6 +4,7 @@ const {
   getAllUsers,
   updateUser,
   deleteUser,
+  deleteMyAccount,
   getMyProfile,
   updateMyProfile,
   getFavorites,
@@ -14,6 +15,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 
 router.get("/me", authMiddleware, getMyProfile);
 router.put("/me", authMiddleware, updateMyProfile);
+router.delete("/me", authMiddleware, deleteMyAccount);
 
 // Favorite management routes
 router.get("/favorites", authMiddleware, getFavorites);

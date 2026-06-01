@@ -5,6 +5,7 @@ const {
   verifyOTP,
   getOwnerProfile,
   updateOwnerProfile,
+  deleteOwnerAccount,
   forgotPassword,
   resetPassword,
 } = require("../controllers/owner.controller");
@@ -22,5 +23,6 @@ router.post("/reset-password", resetPassword);
 // Protected routes
 router.get("/profile", ownerAuth, getOwnerProfile);
 router.put("/profile", ownerAuth, updateOwnerProfile);
+router.delete("/profile", ownerAuth, deleteOwnerAccount);
 
 module.exports = router;

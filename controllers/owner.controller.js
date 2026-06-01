@@ -3,6 +3,9 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { sendEmail } = require("../utils/emailUtils");
+const {
+  deleteOwnerAccountData,
+} = require("../utils/accountDeletion");
 
 // OWNER REGISTRATION
 const registerOwner = async (req, res) => {
@@ -228,6 +231,26 @@ const updateOwnerProfile = async (req, res) => {
   }
 };
 
+// DELETE OWNER ACCOUNT
+const deleteOwnerAccount = async (req, res) => {
+  try {
+    const owner = await FutsalOwner.findById(req.owner.ownerId);
+    if (!owner) {
+      return res.status(404).json({ msg: "Owner not found" });
+    }
+
+    const deletionSummary = await deleteOwnerAccountData(owner._id);
+
+    return res.status(200).json({
+      msg: "Your owner account and related history were deleted successfully",
+      data: deletionSummary,
+    });
+  } catch (error) {
+    console.error("Error deleting owner account:", error);
+    return res.status(500).json({ msg: "Server Error" });
+  }
+};
+
 // FORGOT PASSWORD
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
@@ -299,6 +322,7 @@ module.exports = {
   verifyOTP,
   getOwnerProfile,
   updateOwnerProfile,
+  deleteOwnerAccount,
   forgotPassword,
   resetPassword,
 };

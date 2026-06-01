@@ -1,4 +1,7 @@
 const User = require("../models/User");
+const {
+  deleteUserAccountData,
+} = require("../utils/accountDeletion");
 
 const SAFE_USER_FIELDS =
   "-password -resetToken -otp -otpExpiry -resetTokenExpiry";
@@ -68,16 +71,44 @@ const updateUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const user = await User.findById(req.params.id);
     if (!user)
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
-    return res
-      .status(200)
-      .json({ success: true, message: "User deleted successfully" });
+
+    const deletionSummary = await deleteUserAccountData(user._id);
+
+    return res.status(200).json({
+      success: true,
+      message: "User and related history deleted successfully",
+      data: deletionSummary,
+    });
   } catch (error) {
     console.error("Error deleting user:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
+  }
+};
+
+const deleteMyAccount = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+
+    const deletionSummary = await deleteUserAccountData(user._id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Your account and related history were deleted successfully",
+      data: deletionSummary,
+    });
+  } catch (error) {
+    console.error("Error deleting own account:", error);
     return res
       .status(500)
       .json({ success: false, message: "Internal server error" });
@@ -231,6 +262,7 @@ module.exports = {
   getAllUsers,
   updateUser,
   deleteUser,
+  deleteMyAccount,
   getMyProfile,
   updateMyProfile,
   getFavorites,
