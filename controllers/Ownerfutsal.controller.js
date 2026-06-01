@@ -394,6 +394,113 @@ const verifyBooking = async (req, res) => {
   }
 };
 
+// APPROVE RESCHEDULE REQUEST
+const approveReschedule = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const booking = await Booking.findById(bookingId).populate("futsal");
+    if (!booking) return res.status(404).json({ msg: "Booking not found" });
+
+    // Verify owner owns this futsal
+    if (booking.futsal.owner.toString() !== req.owner.ownerId) {
+      return res.status(403).json({ msg: "Unauthorized - not the owner" });
+    }
+
+    if (!booking.rescheduleRequest || booking.rescheduleRequest.status !== "pending") {
+      return res.status(400).json({ msg: "No pending reschedule request" });
+    }
+
+    // Apply requested date/time
+    booking.bookingDate = booking.rescheduleRequest.requestedDate;
+    booking.startTime = booking.rescheduleRequest.requestedStartTime;
+    booking.endTime = booking.rescheduleRequest.requestedEndTime;
+    booking.rescheduleRequest.status = "approved";
+    booking.rescheduleRequest.reviewedAt = new Date();
+
+    await booking.save();
+
+    // Notify user (create Notification document)
+    const Notification = require("../models/Notification");
+    await Notification.create({
+      user: booking.user,
+      type: "booking_reschedule",
+      title: "Reschedule approved",
+      message: `Your reschedule request for ${booking.futsal.name} has been approved. New: ${new Date(booking.bookingDate).toLocaleDateString()} ${booking.startTime}-${booking.endTime}`,
+      bookingId: booking._id,
+      read: false,
+    });
+
+    return res.status(200).json({ success: true, msg: "Reschedule approved", data: booking });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: "Server Error" });
+  }
+};
+
+// REJECT RESCHEDULE REQUEST
+const rejectReschedule = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { reason } = req.body;
+    const booking = await Booking.findById(bookingId).populate("futsal");
+    if (!booking) return res.status(404).json({ msg: "Booking not found" });
+
+    if (booking.futsal.owner.toString() !== req.owner.ownerId) {
+      return res.status(403).json({ msg: "Unauthorized - not the owner" });
+    }
+
+    if (!booking.rescheduleRequest || booking.rescheduleRequest.status !== "pending") {
+      return res.status(400).json({ msg: "No pending reschedule request" });
+    }
+
+    booking.rescheduleRequest.status = "rejected";
+    booking.rescheduleRequest.reviewedAt = new Date();
+    await booking.save();
+
+    const Notification = require("../models/Notification");
+    await Notification.create({
+      user: booking.user,
+      type: "booking_reschedule",
+      title: "Reschedule rejected",
+      message: `Your reschedule request for ${booking.futsal.name} was rejected. ${reason || ""}`,
+      bookingId: booking._id,
+      read: false,
+    });
+
+    return res.status(200).json({ success: true, msg: "Reschedule rejected", data: booking });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: "Server Error" });
+  }
+};
+
+
+// CANCEL BOOKING (Owner cancels a booking)
+const cancelBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { reason } = req.body;
+
+    const booking = await Booking.findById(bookingId).populate("futsal");
+    if (!booking) return res.status(404).json({ msg: "Booking not found" });
+
+    // Verify owner owns this futsal
+    if (booking.futsal.owner.toString() !== req.owner.ownerId) {
+      return res.status(403).json({ msg: "Unauthorized" });
+    }
+
+    booking.status = "cancelled";
+    booking.cancelledByOwner = true;
+    booking.cancellationReason = reason || "";
+    await booking.save();
+
+    res.status(200).json({ success: true, msg: "Booking cancelled", data: booking });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: "Server Error" });
+  }
+};
+
 module.exports = {
   uploadFutsalImage,
   createOwnerFutsal,
@@ -406,5 +513,8 @@ module.exports = {
   getOwnerNotifications,
   markOwnerNotificationRead,
   verifyBooking,
+  approveReschedule,
+  rejectReschedule,
+  cancelBooking,
 };
 // END OF FILE

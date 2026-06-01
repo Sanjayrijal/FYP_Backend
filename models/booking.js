@@ -106,6 +106,21 @@ const BookingSchema = new mongoose.Schema({
   },
   coupon: { type: mongoose.Schema.Types.ObjectId, ref: "Coupon" },
 
+  // Reschedule request workflow
+  rescheduleRequest: {
+    requestedDate: { type: Date },
+    requestedStartTime: { type: String },
+    requestedEndTime: { type: String },
+    reason: { type: String },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
+    requestedAt: { type: Date },
+    reviewedAt: { type: Date },
+  },
+
   // Owner verification fields
   ownerVerified: {
     type: Boolean,

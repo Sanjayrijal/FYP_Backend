@@ -7,6 +7,8 @@ const {
   sendBookingConfirmation,
   sendBookingCancellation,
 } = require("../services/notificationService");
+const FutsalOwner = require("../models/Futsalowner");
+const Notification = require("../models/Notification");
 
 // CREATE BOOKING
 const createBooking = async (req, res) => {
@@ -320,6 +322,67 @@ const getUserBookings = async (req, res) => {
   }
 };
 
+// USER: Request reschedule
+const requestReschedule = async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+    const { requestedDate, requestedStartTime, requestedEndTime, reason } =
+      req.body;
+
+    const booking = await Booking.findById(bookingId).populate("futsal");
+    if (!booking) return res.status(404).json({ msg: "Booking not found" });
+
+    if (booking.user.toString() !== req.user.userId)
+      return res.status(403).json({ msg: "Unauthorized" });
+
+    // Build original start DateTime
+    const [origStartHour, origStartMin] = booking.startTime
+      .split(":")
+      .map(Number);
+    const originalStart = new Date(booking.bookingDate);
+    originalStart.setHours(origStartHour, origStartMin, 0, 0);
+
+    const now = new Date();
+    const hoursDiff = (originalStart - now) / (1000 * 60 * 60);
+    if (hoursDiff < 24) {
+      return res.status(400).json({ msg: "Rescheduling allowed only before 24 hours" });
+    }
+
+    // Save reschedule request
+    booking.rescheduleRequest = {
+      requestedDate: requestedDate,
+      requestedStartTime: requestedStartTime,
+      requestedEndTime: requestedEndTime,
+      reason: reason || "",
+      status: "pending",
+      requestedAt: new Date(),
+    };
+
+    await booking.save();
+
+    // Notify owner via embedded notifications on FutsalOwner
+    const ownerId = booking.futsal.owner;
+    const ownerNotification = {
+      type: "general",
+      title: "Reschedule request",
+      message: `User requested reschedule for ${booking.futsal.name} on ${new Date(requestedDate).toLocaleDateString()} ${requestedStartTime}-${requestedEndTime}`,
+      futsalName: booking.futsal.name,
+      reason: reason || "",
+      read: false,
+      createdAt: new Date(),
+    };
+
+    await FutsalOwner.findByIdAndUpdate(ownerId, {
+      $push: { notifications: ownerNotification },
+    });
+
+    return res.status(200).json({ success: true, msg: "Reschedule requested" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: "Server Error" });
+  }
+};
+
 module.exports = {
   createBooking,
   getAllBookings,
@@ -330,4 +393,5 @@ module.exports = {
   cancelBooking,
   getUserBookings,
   markAttended,
+  requestReschedule,
 };

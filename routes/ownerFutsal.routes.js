@@ -10,7 +10,10 @@ const {
   getOwnerNotifications,
   markOwnerNotificationRead,
   verifyBooking,
+  approveReschedule,
+  rejectReschedule,
   uploadFutsalImage,
+  cancelBooking,
 } = require("../controllers/Ownerfutsal.controller");
 const ownerAuth = require("../middleware/ownerAuth");
 const upload = require("../middleware/upload");
@@ -20,11 +23,10 @@ const router = express.Router();
 // All routes require owner authentication
 router.use(ownerAuth);
 
-// Image upload endpoint
+// Image upload endpoint (multipart/form-data — multer required here)
 router.post("/upload-image", upload.single("file"), uploadFutsalImage);
 
-// Futsal management
-// Images are now uploaded via Cloudinary (no multer needed)
+// Futsal management (JSON body — no multer needed)
 router.post("/futsals", createOwnerFutsal);
 router.get("/futsals", getOwnerFutsals);
 router.get("/futsals/:id", getOwnerFutsalById);
@@ -38,8 +40,14 @@ router.get("/futsals/:futsalId/bookings", getFutsalBookings);
 // Booking verification (Owner approval/rejection)
 router.put("/bookings/:bookingId/verify", verifyBooking);
 
+// Reschedule approval/rejection
+router.put("/bookings/:bookingId/reschedule/approve", approveReschedule);
+router.put("/bookings/:bookingId/reschedule/reject", rejectReschedule);
+
 // Owner notifications
 router.get("/notifications", getOwnerNotifications);
 router.put("/notifications/:notificationId/read", markOwnerNotificationRead);
+
+router.post("/bookings/:bookingId/cancel", cancelBooking);
 
 module.exports = router;

@@ -132,6 +132,7 @@ const loginOwner = async (req, res) => {
 // VERIFY OTP
 const verifyOTP = async (req, res) => {
   const { email, otp } = req.body;
+  console.log("Verifying OTP for email:", email, "with OTP:", otp);
 
   try {
     const owner = await FutsalOwner.findOne({

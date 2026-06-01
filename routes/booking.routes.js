@@ -9,6 +9,7 @@ const {
   cancelBooking,
   markAttended,
   getUserBookings,
+  requestReschedule,
 } = require("../controllers/booking.controller");
 
 // Import authentication middleware
@@ -66,5 +67,8 @@ router.put("/cancel/:bookingId", ownerAuth, cancelBooking);
 
 // Mark booking as attended/played - REQUIRES OWNER AUTHENTICATION
 router.put("/attend/:bookingId", ownerAuth, markAttended);
+
+// Request reschedule - USER
+router.post("/:id/reschedule", authMiddleware, verifiedUserMiddleware, requestReschedule);
 
 module.exports = router;
